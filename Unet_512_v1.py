@@ -12,8 +12,12 @@ import matplotlib.pyplot as plt
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
 os.environ["HDF5_USE_FILE_LOCKING"]="FALSE"
 #%%
-os.getcwd()
+
+#change directory to folder where data located"
+
+#os.getcwd()
 #os.chdir("code/Data Preprocessing")
+
 #%%
 seed = 42
 np.random.seed = seed
@@ -25,9 +29,7 @@ IMG_CHANNELS = 1
 TRAIN_PATH = 'train/'
 TEST_PATH = 'test/'
 
-#train_ids = np.load("i_trains.npy", allow_pickle=True)
-#test_ids = np.load("i_test.npy", allow_pickle=True)
-
+#load train data
 X1 = np.load(f"{TRAIN_PATH}train_rf1_tiles.npz", allow_pickle=True)
 X2 = np.load(f"{TRAIN_PATH}train_rf2_tiles.npz", allow_pickle=True)
 
@@ -44,40 +46,22 @@ Y2 = Y2.f.XY_tiles
 Y_train = np.vstack((Y1,Y2))
 Y_train = np.reshape(Y_train,(Y_train.shape[0],512,512,1))
 
-# test images
+# load test data
 X_test = np.load(f"{TEST_PATH}test_rf1_tiles.npz", allow_pickle=True)
 X_test = X_test.f.XY_tiles
 X_test = np.reshape(X_test,(X_test.shape[0],512,512,1))
 
 #%%
+
+# visualize data
 #i = 20#random.randint(0, X_train.shape[0])
 #data_visualize(np.squeeze(X_train[i]), False, False)
 #data_visualize(np.squeeze(Y_train[i]), False, True)
-x = [1,2,3,4,5,6,7,8]
-y = [.1,.2,.5,.4,.4,.8,.9,1.3]
-plt.plot(x,y)
-plt.show
-#%%
-x=[1,2,3]
-y=[5,7,4]
-
-x2 = [1,2,3]
-y2 = [10,14,12]
-
-#initiate plots with plt.plot
-plt.plot(x,y, label='First Line')
-plt.plot(x2,y2, label='Second Line')
-
-#define graph annotations
-plt.xlabel('x axis')
-plt.ylabel('y axis')
-plt.title('interesting graph\ncheck it out')
-#command to display plot legend
-plt.legend()
-#command to show plot
-plt.show()
 
 #%%
+
+#Define model
+
 inputs = tf.keras.layers.Input((IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS))
 s = tf.keras.layers.Lambda(lambda x: x / 255)(inputs)
 c = [64,128,256,512,1024]
@@ -137,8 +121,8 @@ model = tf.keras.Model(inputs=[inputs], outputs=[outputs])
 model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 model.summary()
 
-################################
-# Modelcheckpoint
+
+# Modelcheckpoint: define checkpoint parameters and train model
 checkpointer = tf.keras.callbacks.ModelCheckpoint('./Unet_512_v1.h5', verbose=1, save_best_only=True)
 callbacks = [
     tf.keras.callbacks.EarlyStopping(patience=10, monitor='val_loss'),
@@ -147,8 +131,9 @@ callbacks = [
 
 results = model.fit(X_train, Y_train, validation_split=0.1, batch_size=5, epochs=30, callbacks=callbacks)
 
-####################################
 #%%
+
+#use model to make predictions
 
 idx = random.randint(0, X_train.shape[0])
 
@@ -161,12 +146,15 @@ preds_val_t = (preds_val > 0.5)
 preds_test_t = (preds_test > 0.5)
 
 #%%
+
+#visualize random predictions
 ix = random.randint(0,len(preds_train_t))
 data_process.data_visualize(np.squeeze(X_train[ix], False, False))
 data_process.data_visualize(np.squeeze(Y_train[ix]), False, True)
 data_process.data_visualize(preds_train_t[ix], False, True)
 #%%
 
+#visualize random predictions
 ix = random.randint(0,len(preds_val_t))
 data_process.data_visualize(X_train[int(X_train.shape[0] * 0.9):][ix], False, False)
 data_process.data_visualize(np.squeeze(Y_train[int(Y_train.shape[0] * 0.9):][ix]), False, True)
